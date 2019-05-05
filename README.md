@@ -159,7 +159,7 @@ A:1, B:2, C:2
 A:1,      C:3
 ```
 
-This work process
+This work process is ...
 
 ```sh
 # initial step
@@ -177,3 +177,118 @@ A:1, B:2, C:2
 A:1,      C:3
 ```
 
+### Multiple object element has array
+
+```sh
+echo '{"A":1, "B":{"d":11, "e":[1, 2], "f":[1, 2, 3]}, "C":{"g":12, "h":[1, 2, 3, 4]}}' \
+| flatten -fromat ltsv
+A:1, B.d:11, B.e:1, B.f:1 C.g:12, C.h:1
+A:1, B.d:11, B.e:2, B.f:2 C.g:12, C.h:2
+A:1, B.d:11,        B.f:3 C.g:12, C.h:3
+A:1, B.d:11,              C.g:12, C.h:4
+
+This work process is...
+
+```sh
+# initial step
+{"A":1, "B":{"d":11, "e":[1, 2], "f":[1, 2, 3]}, "C":{"g":12, "h":[1, 2, 3, 4]}}
+
+# second step
+{A:1, B.d:11, B.e:[1, 2], B.f:[1, 2, 3], C.g:12, C.h:[1, 2, 3, 4]}
+
+# third step
+<------------------------>  <------------------------>  <------------------------>
+A:1, B.d:11, B.e:1, C.g:12  A:1, B.d:11, B.f:1, C.g:12  A:1, B.d:11, C.g:12, C.h:1
+A:1, B.d:11, B.e:2, C.g:12  A:1, B.d:11, B.f:2, C.g:12  A:1, B.d:11, C.g:12, C.h:2
+                            A:1, B.d:11, B.f:3, C.g:12  A:1, B.d:11, C.g:12, C.h:3
+                                                        A:1, B.d:11, C.g:12, C.h:4
+
+# last step
+A:1, B.d:11, B.e:1, B.f:1 C.g:12, C.h:1
+A:1, B.d:11, B.e:2, B.f:2 C.g:12, C.h:2
+A:1, B.d:11,        B.f:3 C.g:12, C.h:3
+A:1, B.d:11,              C.g:12, C.h:4
+```
+
+### Array exists in parallel
+
+```sh
+echo '{A:1, B:[{a:11, b:11}, {a:12, b:12}, {a:13, b:13}], C:[{c:21, d:21}, {c:22, d:22}]}' \
+| flatten -format ltsv
+A:1, B.a:11, B.b:11, C.c:21, C.d:21
+A:1, B.a:12, B.b:12, C.c:22, C.d:22
+A:1, B.a:13, B.b:13, C.c:null, D.e:null
+```
+
+This process works is ...
+
+```sh
+# first step
+{A:1, B:[{a:11, b:11}, {a:12, b:12}, {a:13, b:13}], C:[{c:21, d:21}, {c:22, d:22}]}
+
+# second step
+<------------------->  <------------------->
+{A:1, B:{a:11, b:11}}  {A:1, C:{c:21, d:21}}
+{A:1, B:{a:12, b:12}}  {A:1, C:{c:22, d:22}}
+{A:1, B:{a:13, b:13}}  
+
+# last step
+A:1, B.a:11, B.b:11, C.c:21, C.d:21
+A:1, B.a:12, B.b:12, C.c:22, C.d:22
+A:1, B.a:13, B.b:13, C.c:null, D.e:null
+```
+
+### Nested array object has array
+
+```sh
+echo '{"A":1, "B":[{"a":11, "b":11}, {"a":12, "b":12}, {"a":13, "b":13}], "C":[{"d":21, "f":[1,2,3]}, {"d":22, "f":[1,2]}], "D":[{"d":21, "f":[1,2]}, {"d":22, "f":[1]}]}
+' \
+| flatten -format ltsv
+A:1, B.a:11, B.b:11, C.d:21, C.f:1, D.d:21, D.f:1
+A:1, B.a:12, B.b:12, C.d:21, C.f:2, D.d:21, D.f:2
+A:1, B.a:13, B.b:13, C.d:21, C.f:3, D.d:22, D.f:1
+A:1, B:null,         C.d:22, C.f:1, D:null
+A:1, B:null,         C.d:22, C.f:2, D:null
+```
+
+This process work is...
+```sh
+# first step
+{
+   "A":1,
+   "B":[
+      {"a":11, "b":11},
+      {"a":12, "b":12},
+      {"a":13, "b":13}
+   ],
+   "C":[
+      {"d":21, "f":[1, 2, 3 ]},
+      {"d":22, "f":[1, 2]}
+   ],
+   "D":[
+      {"d":21, "f":[1, 2]},
+      {"d":22, "f":[1]}
+   ]
+}
+
+# second step
+<--------A*B-------->  <------A*C--------->  <------A*D--------->
+{A:1, B:{a:11, b:11}}  {A:1, C:{d:21, f:1}}  {A:1, D:{d:21, f:1}}
+{A:1, B:{a:12, b:12}}  {A:1, C:{d:21, f:2}}  {A:1, D:{d:21, f:2}}
+{A:1, B:{a:13, b:13}}  {A:1, C:{d:21, f:3}}  {A:1, D:{d:22, f:1}}
+                       {A:1, C:{d:22, f:2}}
+
+# third step
+{A:1, B:{a:11, b:11}, C:{d:21, f:1}, D:{d:21, f:1}}
+{A:1, B:{a:12, b:12}, C:{d:21, f:2}, D:{d:21, f:2}}
+{A:1, B:{a:13, b:13}, C:{d:21, f:3}, D:{d:22, f:1}}
+{A:1, B:null,         C:{d:22, f:1}, D:null}
+{A:1, B:null,         C:{d:22, f:2}, D:null}
+
+# last step
+A:1, B.a:11, B.b:11, C.d:21, C.f:1, D.d:21, D.f:1
+A:1, B.a:12, B.b:12, C.d:21, C.f:2, D.d:21, D.f:2
+A:1, B.a:13, B.b:13, C.d:21, C.f:3, D.d:22, D.f:1
+A:1, B:null,         C.d:22, C.f:1, D:null
+A:1, B:null,         C.d:22, C.f:2, D:null
+```
