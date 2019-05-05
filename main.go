@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/spf13/cobra"
 	"fmt"
-	"strings"
 	"bufio"
 	"os"
 	"encoding/json"
@@ -25,10 +24,27 @@ func main() {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
-			fmt.Printf("%v\n", input)
 
-			fmt.Println(strings.Join(args, " "))
-			fmt.Println("complete")
+			result := make(map[string]interface{})
+
+			for k, v := range input {
+				switch tv := v.(type) {
+				case map[string]interface{}:
+					for inKey, inValue := range tv {
+						key := k + "." + inKey
+						result[key] = inValue
+					}
+				default:
+					result[k] = v
+				}
+			}
+
+			output, err := json.Marshal(result)
+			if err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			fmt.Println(string(output))
 		},
 	}
 	root.Flags().StringVarP(&format, "format", "f", "JSON", "times to echo the input")
