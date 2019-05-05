@@ -28,7 +28,7 @@ A:1, B:1, C:3
 
 # array is empty. result will not be empty record.
 echo '{"A":1, "B":1, "C":[]}' | flatten -format ltsv
-A:1, B:1, C:nuil 
+A:1, B:1, C:null
 
 // array length is only one.
 echo '{"A":1, "B":1, "C":[1]}' | flatten -format ltsv
