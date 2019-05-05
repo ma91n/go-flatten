@@ -1,4 +1,4 @@
-module github.com/laqiiz/go-flatten
+module github.com/laqiiz/flatten
 
 go 1.12
 
