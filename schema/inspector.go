@@ -3,7 +3,6 @@ package schema
 import (
 	"fmt"
 	"reflect"
-	"errors"
 )
 
 type Inspector struct {
@@ -19,7 +18,7 @@ func (i *Inspector) Lookup(m map[string]interface{}) ([]string, error) {
 			for _, item := range tv {
 				mv, ok := item.(map[string]interface{})
 				if !ok {
-					return nil, errors.New(fmt.Sprintf("inspection error %v", v))
+					return nil, fmt.Errorf("inspection error %v", v)
 				}
 
 				nestKeys, err := i.Lookup(mv)
