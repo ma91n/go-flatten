@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -60,7 +59,7 @@ func TestJSONHasObjectiveElement(t *testing.T) {
 	}
 
 	if err := c2.Wait(); err != nil {
-		fmt.Println(string(stderr.Bytes()))
+		fmt.Println(stderr.String())
 		t.Fatal(err)
 	}
 
@@ -69,7 +68,7 @@ func TestJSONHasObjectiveElement(t *testing.T) {
 	//	t.Fatal(err)
 	//}
 
-	fmt.Println(input, string(out.Bytes()))
+	fmt.Println(input, out.String())
 
 	if err := mapEqual([]byte(input), out.Bytes()); err != nil {
 		t.Fatal(err)
@@ -93,5 +92,5 @@ func mapEqual(expected, actual []byte) error {
 	if eq {
 		return nil
 	}
-	return errors.New(fmt.Sprintf("unmatch expected %v and actual %v\n", expectedMap, actualMap))
+	return fmt.Errorf("unmatch expected %v and actual %v\n", expectedMap, actualMap)
 }
